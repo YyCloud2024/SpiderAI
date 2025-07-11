@@ -23,7 +23,7 @@ logs/
 *.sqlite3
 
 # 媒体文件
-media/
+
 uploads/
 
 # 系统文件
