@@ -1,0 +1,100 @@
+{% extends "pc/template.html" %}
+
+{% block title %}403 - 权限拒绝{% endblock %}
+
+{% block css %}
+<style>
+    body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #FF5722 0%, #FFB800 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'HarmonyOS Sans', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+    }
+    .forbidden-card {
+        background: rgba(255,255,255,0.88);
+        box-shadow: 0 8px 32px 0 rgba(255,87,34,0.13), 0 1.5px 6px 0 rgba(255,184,0,0.08);
+        border-radius: 16px;
+        padding: 48px 36px 36px 36px;
+        max-width: 420px;
+        width: 100%;
+        text-align: center;
+        backdrop-filter: blur(12px);
+        position: relative;
+        overflow: hidden;
+    }
+    .forbidden-icon {
+        font-size: 64px;
+        color: #FF5722;
+        margin-bottom: 18px;
+        display: inline-block;
+        animation: float403 2.5s infinite ease-in-out;
+    }
+    @keyframes float403 {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
+    }
+    .forbidden-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 12px;
+        letter-spacing: 2px;
+    }
+    .forbidden-desc {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 28px;
+        line-height: 1.7;
+    }
+    .layui-btn-home {
+        background: linear-gradient(90deg, #FF5722 0%, #FFB800 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        padding: 10px 36px;
+        box-shadow: 0 2px 8px rgba(255,87,34,0.10);
+        transition: box-shadow 0.2s, transform 0.2s;
+        font-weight: 500;
+    }
+    .layui-btn-home:hover {
+        box-shadow: 0 6px 24px rgba(255,87,34,0.18);
+        transform: translateY(-2px) scale(1.03);
+        background: linear-gradient(90deg, #FFB800 0%, #FF5722 100%);
+    }
+    @media (max-width: 480px) {
+        .forbidden-card {
+            padding: 32px 10px 24px 10px;
+            max-width: 98vw;
+        }
+        .forbidden-title {
+            font-size: 22px;
+        }
+        .forbidden-desc {
+            font-size: 14px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="forbidden-card layui-anim layui-anim-up">
+    <i class="layui-icon layui-icon-close-fill forbidden-icon"></i>
+    <div class="forbidden-title">403 - 权限拒绝</div>
+    <div class="forbidden-desc">
+        抱歉，您的请求被拒绝，可能由于CSRF防护机制拦截或权限不足。<br>
+        请刷新页面或重新登录后再试，或点击下方按钮返回首页。
+    </div>
+    <a href="/" class="layui-btn layui-btn-home">返回首页</a>
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+layui.use(function(){
+    // 可选：页面动画或交互
+});
+</script>
+{% endblock %}

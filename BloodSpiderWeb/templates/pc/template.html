@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>{% block title %}蜘蛛AI{% endblock %}</title>
+    {% include 'pc/公共资源/public_head.html' %}
+    {% include 'pc/公共资源/public_css.html' %}
+    {% block css %}{% endblock %}
+</head>
+<body>
+    {% include 'pc/公共资源/public_js.html' %}
+    {% block body %}{% endblock %}
+</body>
+{% block js %}{% endblock %}
+</html>

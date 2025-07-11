@@ -1,0 +1,147 @@
+<style>
+    /* 确保父元素高度正确 */
+    html, body {
+        height: 100%;
+        overflow: hidden; /* 禁止页面整体滚动 */
+        margin: 0;
+        padding: 0;
+    }
+
+    .layui-nav-tree {
+        width: auto !important;
+        height: 100vh; /* 高度与屏幕一致 */
+        overflow-y: auto; /* 内容过多时内部滚动 */
+        box-sizing: border-box; /* 确保padding不影响整体高度 */
+        padding-bottom: 20px; /* 底部预留空间 */
+    }
+
+    /* 隐藏滚动条但保留滚动功能 */
+    .layui-nav-tree::-webkit-scrollbar {
+        display: none; /* Chrome, Safari 和 Opera */
+    }
+
+    .layui-nav-tree {
+        -ms-overflow-style: none; /* IE 和 Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+
+    /* 优化导航项样式，确保内容过多时显示正常 */
+    .layui-nav-item a {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        padding-right: 20px; /* 为过长文本预留空间 */
+    }
+
+    /* 高亮显示样式 */
+    .layui-nav-item.layui-this {
+        background-color: #f2f2f2;
+    }
+</style>
+
+<ul class="layui-nav layui-nav-tree" lay-filter="left-filter-nav">
+
+</ul>
+
+<script>
+    layui.use(function () {
+        var element = layui.element;
+        var layer = layui.layer;
+        var util = layui.util;
+        var $ = layui.$;
+
+        // 处理左侧菜单事件
+        util.event('lay-header-event', {
+            menuLeft: function (othis) {
+                layer.msg('展开左侧菜单的操作', {icon: 0});
+            }
+        });
+
+        // 获取对话列表
+        window.Get_chat_history = async function get_chat_history() {
+            try {
+                const response = await axios({
+                    url: "/api/{{ link_name }}/get_chat_history/",
+                    method: "GET",
+                    params: {
+                        "offset": 0,
+                        "limit": 40
+                    },
+                    BloodSpiderIsShowLoading: true
+                });
+
+                // 清空原有的导航项
+                $('.layui-nav-tree').html('');
+
+                let li_text = `
+                    <li class="layui-nav-item layui-show-xs-inline-block layui-hide-sm" lay-header-event="menuLeft">
+                        <i class="layui-icon layui-icon-spread-left"></i>
+                    </li>
+                    <li class="layui-nav-item">
+                        <a href="javascript:;">设置<i class="layui-icon layui-icon-down layui-nav-more"></i></a>
+                        <dl class="layui-nav-child">
+                            <dd><a href="/web/index/">切换大模型</a></dd>
+                        </dl>
+                        <dl class="layui-nav-child">
+                            <dd><a href="/web/link/{{ link_name }}/">创建新对话</a></dd>
+                        </dl>
+                    </li>
+                `;
+
+                response.data.data.conversations.forEach(item => {
+                    // 对过长标题进行处理，避免布局错乱
+                    let title = item.title.length > 20 ? item.title.substring(0, 20) + '...' : item.title;
+                    var li = `<li class="layui-nav-item"><a href="javascript:;" data-id="${item.id}" title="${item.title}">${title}</a></li>`;
+                    li_text += li;
+                });
+
+                $('.layui-nav-tree').html(li_text);
+                // 重新渲染导航组件
+                element.render('nav', 'left-filter-nav');
+
+                // 为每个a标签添加点击事件，排除固定的a标签和menuLeft的i标签
+                $('.layui-nav-tree a').not('dl.layui-nav-child a').click(function () {
+                    var id = $(this).attr('data-id');
+                    if (id) {
+                        window.GetHistoryChatContent(id)
+                    }
+                    console.log('这是点击了哪一个A:', $(this).text());
+                });
+
+                // 判断页面是否有chat_id
+                var url = layui.url();
+                var chat_id = ""
+                if (url.search['chat_id']) {
+                    chat_id = url.search['chat_id']
+                    // 查找导航栏中data-id与chat_id相同的li元素并高亮显示
+                    $('.layui-nav-tree li').each(function () {
+                        var li_id = $(this).find('a').attr('data-id');
+                        if (li_id === chat_id.toString()) {
+                            $(this).addClass('layui-this');
+                            // 滚动导航栏到对应的菜单项
+                            var navTree = $('.layui-nav-tree');
+                            var scrollTop = navTree.scrollTop();
+                            var itemTop = $(this).position().top;
+                            var itemHeight = $(this).outerHeight();
+                            var navHeight = navTree.height();
+
+                            if (itemTop + itemHeight > navHeight + scrollTop) {
+                                navTree.scrollTop(itemTop + scrollTop - navHeight + itemHeight);
+                            } else if (itemTop < scrollTop) {
+                                navTree.scrollTop(itemTop);
+                            }
+                        }
+                    });
+                }
+
+
+            } catch (error) {
+                console.error("获取对话历史失败:", error);
+                layer.msg('获取对话列表失败', {icon: 2});
+            }
+        }
+
+        // 初始化时调用获取对话列表（取消注释即可启用）
+        window.Get_chat_history();
+    });
+</script>

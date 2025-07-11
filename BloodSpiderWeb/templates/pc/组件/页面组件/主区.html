@@ -1,0 +1,574 @@
+<style>
+    /* 自定义对话界面样式 */
+    .chat-container {
+        height: calc(100vh - 180px);
+        overflow-y: auto;
+        padding: 15px;
+        background-color: #f8f9fa;
+        margin-bottom: 20px;
+    }
+
+    .chat-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    .chat-container {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .user-message,
+    .ai-message {
+        display: flex;
+        margin-bottom: 20px;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .user-message {
+        justify-content: flex-end;
+    }
+
+    .ai-message {
+        justify-content: flex-start;
+    }
+
+    .message-content {
+        max-width: 70%;
+        padding: 12px 18px;
+        border-radius: 18px;
+        position: relative;
+        word-wrap: break-word;
+    }
+
+    .user-message .message-content {
+        background-color: #409eff;
+        color: white;
+    }
+
+    .ai-message .message-content {
+        background-color: white;
+        color: #333;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin: 0 10px;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .user-avatar {
+        background-image: url('https://tc.z.wiki/autoupload/f/X5WBTmnnJ41phBINO7UGZE6HmS92RzTxdBRUxKqi96ayl5f0KlZfm6UsKj-HyTuv/20250712/kvMI/1328X1328/%E9%87%8D%E6%96%B0%E7%94%9F%E6%88%90%E8%AF%B7%E6%B1%82.png');
+    }
+
+    .ai-avatar {
+        background-image: url('https://cdn.apifox.com/app/apidoc-image/custom/20250712/4cc8be94-c22a-438b-843f-8bca642c95fd.png');
+    }
+
+    .message-time {
+        font-size: 12px;
+        color: #999;
+        margin: 5px 10px 0;
+        align-self: flex-end;
+    }
+
+    .send-box {
+        padding: 15px;
+        border-top: 1px solid #eee;
+        background-color: white;
+    }
+
+    .send-area {
+        display: flex;
+        align-items: flex-end;
+    }
+
+    .send-input {
+        flex: 1;
+        margin-right: 10px;
+        min-height: 40px;
+        max-height: 120px;
+        overflow-y: auto;
+        border: 1px solid #e6e6e6;
+        border-radius: 5px;
+        padding: 10px;
+        resize: none;
+        transition: border-color 0.3s;
+    }
+
+    .send-input:focus {
+        border-color: #409eff;
+        outline: none;
+    }
+
+    .send-btn {
+        min-width: 80px;
+        transition: all 0.3s;
+    }
+
+    .send-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .header {
+        background-color: #393d49;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+    /* 加载动画 */
+    .typing-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 0;
+    }
+
+    .typing-indicator span {
+        height: 6px;
+        width: 6px;
+        margin: 0 2px;
+        background-color: #9e9ea1;
+        border-radius: 50%;
+        display: inline-block;
+        animation: typing 1.4s infinite ease-in-out both;
+    }
+
+    .typing-indicator span:nth-child(1) {
+        animation-delay: -0.32s;
+    }
+
+    .typing-indicator span:nth-child(2) {
+        animation-delay: -0.16s;
+    }
+
+    @keyframes typing {
+        0%,
+        80%,
+        100% {
+            transform: scale(0);
+        }
+        40% {
+            transform: scale(1);
+        }
+    }
+
+    .send-box-fixed {
+        position: fixed;
+        bottom: 20px;
+        z-index: 999;
+        transform: translateX(-50%);
+        background-color: white;
+        padding: 15px;
+        border-top: 1px solid #eee;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 576px) {
+        .chat-container {
+            height: calc(100vh - 160px);
+        }
+
+        .message-content {
+            max-width: 85%;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+        }
+    }
+
+    ::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: transparent;
+    }
+
+    * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+</style>
+
+<div class="layui-card">
+    <div class="layui-card-header header">
+
+    </div>
+    <div class="layui-card-body">
+        <!-- 对话内容区域 -->
+        <div id="chatContainer" class="chat-container layui-card">
+            <!-- 欢迎消息 -->
+            <div class="ai-message">
+                <div class="avatar ai-avatar"></div>
+                <div class="message-content">
+                    你好！我是 蜘蛛AI ，有什么可以帮助你的吗？
+                </div>
+                <div class="message-time">刚刚</div>
+            </div>
+        </div>
+
+        <!-- 发送消息区域容器 -->
+        <div id="sendBoxWrapper" class="layui-row" style="position: relative;"></div>
+    </div>
+</div>
+
+<script>
+    // 创建chat_id
+    async function createChatId() {
+        const response = await axios({
+            url: "/api/{{ link_name }}/create_chat_id/",
+            method: "GET",
+            BloodSpiderIsShowLoading: true
+        });
+        return response.data.data.chat_id;
+    }
+
+    // 修复发送按钮位置并创建发送区域
+    function fixSendBoxPosition() {
+        const cardBody = document.querySelector('.layui-card-body');
+        const wrapper = document.getElementById('sendBoxWrapper');
+        if (!cardBody || !wrapper) return;
+
+        const rect = cardBody.getBoundingClientRect();
+        const leftOffset = rect.left + window.scrollX;
+        const width = rect.width - 40;
+
+        let sendBox = document.getElementById('fixedSendBox');
+        if (!sendBox) {
+            sendBox = document.createElement('div');
+            sendBox.id = 'fixedSendBox';
+            sendBox.className = 'send-box-fixed';
+            sendBox.style.left = `${leftOffset + 20 + width / 2}px`;
+            sendBox.style.width = `${width}px`;
+
+            sendBox.innerHTML = `
+                <div class="send-area">
+                    <textarea id="messageInput" class="send-input layui-textarea" placeholder="请输入消息...按Enter发送，Shift+Enter换行"></textarea>
+                    <button id="sendBtn" class="send-btn layui-btn layui-btn-primary layui-btn-radius">
+                        <i class="layui-icon layui-icon-release"></i> 发送
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(sendBox);
+            initAutoResizeTextarea();
+        } else {
+            sendBox.style.left = `${leftOffset + 20 + width / 2}px`;
+            sendBox.style.width = `${width}px`;
+        }
+    }
+
+    // 输入框自动调整高度
+    function initAutoResizeTextarea() {
+        const textarea = document.getElementById('messageInput');
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight > 40 ? textarea.scrollHeight : 40) + 'px';
+            textarea.addEventListener('input', function () {
+                this.style.height = 'auto';
+                const maxHeight = 120;
+                this.style.height = (this.scrollHeight > maxHeight ? maxHeight : this.scrollHeight) + 'px';
+            });
+        }
+    }
+
+    // 初始化事件监听
+    function initEventListeners() {
+        document.addEventListener('click', function (e) {
+            if (e.target.id === 'sendBtn' || e.target.closest('#sendBtn')) {
+                sendMessage();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            const textarea = document.getElementById('messageInput');
+            if (textarea && e.target === textarea && e.keyCode === 13 && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    // 转义HTML特殊字符
+    function escapeHtml(unsafe) {
+        return unsafe
+           .replace(/&/g, "&amp;")
+           .replace(/</g, "&lt;")
+           .replace(/>/g, "&gt;")
+           .replace(/"/g, "&quot;")
+           .replace(/'/g, "&#039;");
+    }
+
+    // 发送消息并处理流式回复
+    async function sendMessage() {
+        const textarea = document.getElementById('messageInput');
+        if (!textarea) return;
+
+        const message = textarea.value.trim();
+        if (!message) {
+            layer.msg('请输入消息内容', { icon: 2, time: 1000 });
+            return;
+        }
+
+        var url = layui.url();
+        var chat_id = ""
+        if (!url.search['chat_id']) {
+            chat_id = await createChatId();
+            // 把ID放在url中,但是不可以跳转页面
+            if (history.pushState) {
+                history.pushState(null, null, "?chat_id=" + chat_id);
+
+            }
+        } else {
+            chat_id = url.search['chat_id'];
+        }
+
+
+        // 添加用户消息到对话窗口
+        const now = new Date();
+        const timeStr = `${now.getHours()}:${now.getMinutes() < 10 ? '0' : ''}${now.getMinutes()}`;
+        const userMessageHtml = `
+            <div class="user-message">
+                <div class="message-time">${timeStr}</div>
+                <div class="message-content">
+                    ${message.replace(/\n/g, '<br>')}
+                </div>
+                <div class="avatar user-avatar"></div>
+            </div>
+        `;
+        document.getElementById('chatContainer').insertAdjacentHTML('beforeend', userMessageHtml);
+        textarea.value = '';
+        textarea.style.height = 'auto';
+        scrollToBottom();
+
+
+        // 显示"正在输入"状态
+        const typingHtml = `
+            <div class="ai-message" id="typingIndicator">
+                <div class="avatar ai-avatar"></div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('chatContainer').insertAdjacentHTML('beforeend', typingHtml);
+        scrollToBottom();
+
+        // 首先判断页面中有没有chat_id
+
+
+        try {
+            // 发起流式请求（SSE）
+            const response = await fetch(`/api/{{ link_name }}/chat/completion/?chat_id=${chat_id}&message=${encodeURIComponent(message)}&yuanbao_model=hunyuan_gpt_175B_0404&multimedia=[]`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // 移除"正在输入"状态，创建AI消息容器
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) typingIndicator.remove();
+
+            // 创建空的AI消息框架（用于流式填充）
+            const aiMessageId = `ai-message-${Date.now()}`;
+            const aiMessageHtml = `
+                <div class="ai-message" id="${aiMessageId}">
+                    <div class="avatar ai-avatar"></div>
+                    <div class="message-content" id="${aiMessageId}-content"></div>
+                    <div class="message-time">${timeStr}</div>
+                </div>
+            `;
+            document.getElementById('chatContainer').insertAdjacentHTML('beforeend', aiMessageHtml);
+            const contentElement = document.getElementById(`${aiMessageId}-content`);
+            scrollToBottom();
+
+            // 处理流式响应
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = ''; // 用于缓存不完整的行
+
+            if (!url.search['chat_id']) {
+                await window.Get_chat_history();
+            }
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                // 解码二进制数据为文本
+                buffer += decoder.decode(value, { stream: true });
+                // 按行分割（SSE格式每行以"\n"分隔）
+                const lines = buffer.split('\n');
+                // 最后一行可能不完整，留到下次处理
+                buffer = lines.pop() || '';
+
+                // 处理每一行数据
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) continue; // 跳过空行
+                    if (trimmedLine.startsWith(':')) continue; // 跳过注释行
+
+                    // 解析SSE的data字段（格式：data: {"chat_type": "...", "chat_content": "..."}）
+                    if (trimmedLine.startsWith('data:')) {
+                        const dataStr = trimmedLine.slice(5).trim();
+                        try {
+                            const data = JSON.parse(dataStr);
+                            if (data.chat_type === 'chat' && data.chat_content) {
+                                // 转义HTML特殊字符
+                                const escapedContent = escapeHtml(data.chat_content).replace(/\n/g, '<br>');
+                                // 流式添加内容到消息容器
+                                contentElement.innerHTML += escapedContent;
+                                scrollToBottom();
+                            }
+                        } catch (e) {
+                            console.error('解析流式数据失败:', e);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('流式请求失败:', error);
+            // 显示错误消息
+            const errorHtml = `
+                <div class="ai-message">
+                    <div class="avatar ai-avatar"></div>
+                    <div class="message-content" style="color: #f56c6c;">
+                        抱歉，获取回复失败，请稍后再试
+                    </div>
+                    <div class="message-time">${timeStr}</div>
+                </div>
+            `;
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) typingIndicator.remove();
+            document.getElementById('chatContainer').insertAdjacentHTML('beforeend', errorHtml);
+            scrollToBottom();
+        }
+    }
+
+    // 滚动到对话底部
+    function scrollToBottom() {
+        const container = document.getElementById('chatContainer');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
+    }
+
+    // 获取历史对话内容的函数
+    window.GetHistoryChatContent = async function getHistoryChatContent(chat_id) {
+        try {
+            // 清空聊天容器
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '';
+            history.pushState(null, null, "?chat_id=" + chat_id);
+            const limit = 60;
+            // 发起请求获取历史对话内容
+            const response = await fetch(`/api/{{ link_name }}/get_chat_content/?offset=0&limit=${limit}&chat_id=${chat_id}`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.code === 0) {
+                const convs = data.data.convs;
+
+                // 遍历对话内容并添加到页面中
+                for (const conv of convs) {
+                    const now = new Date(conv.createTime * 1000);
+                    const timeStr = `${now.getHours()}:${now.getMinutes() < 10 ? '0' : ''}${now.getMinutes()}`;
+                    let messageHtml = '';
+
+                    let msgContent = '';
+                    if (conv.speechesV2 && conv.speechesV2.length > 0 && conv.speechesV2[0].content && conv.speechesV2[0].content.length > 0 && conv.speechesV2[0].content[0].msg) {
+                        msgContent = conv.speechesV2[0].content[0].msg.replace(/\n/g, '<br>');
+                    }
+
+                    if (conv.speaker === 'human' || conv.speaker === 'user') {
+                        messageHtml = `
+                            <div class="user-message">
+                                <div class="message-time">${timeStr}</div>
+                                <div class="message-content">
+                                    ${msgContent}
+                                </div>
+                                <div class="avatar user-avatar"></div>
+                            </div>
+                        `;
+                    } else if (conv.speaker === 'ai') {
+                        // 转义HTML特殊字符
+                        const escapedContent = escapeHtml(msgContent);
+                        messageHtml = `
+                            <div class="ai-message">
+                                <div class="avatar ai-avatar"></div>
+                                <div class="message-content">
+                                    ${escapedContent}
+                                </div>
+                                <div class="message-time">${timeStr}</div>
+                            </div>
+                        `;
+                    }
+
+                    // 将消息插入到对话容器的底部（最新消息显示在最下方）
+                    chatContainer.insertAdjacentHTML('beforeend', messageHtml);
+                }
+
+                // 滚动到最新消息
+                scrollToBottom();
+            }
+        } catch (error) {
+            console.error('获取历史对话内容失败:', error);
+        }
+    }
+
+    // 页面初始化
+    window.addEventListener('load', function () {
+        fixSendBoxPosition();
+        initEventListeners();
+
+        // 引入layui
+        if (typeof layui === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/layui-src/dist/layui.js';
+            script.onload = function () {
+                layui.use(['layer', 'jquery'], function () { });
+            };
+            document.head.appendChild(script);
+        } else {
+            layui.use(['layer', 'jquery'], function () { });
+        }
+
+        var url = layui.url();
+        var chat_id = ""
+        if (url.search['chat_id']) {
+            window.GetHistoryChatContent(url.search['chat_id'])
+        }
+    });
+
+    window.addEventListener('resize', fixSendBoxPosition);
+    window.addEventListener('scroll', fixSendBoxPosition);
+</script>

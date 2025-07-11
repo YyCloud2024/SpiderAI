@@ -1,0 +1,296 @@
+<script src="/static/layui/layui.js"></script>
+<script src="/static/utils/axios.js"></script>
+<script src="/static/utils/encryption.js"></script>
+<!-- 全局注释 -->
+<script>
+    // BloodSpiderIsShowLoading: Axios请求的时候是否显示Loading?
+</script>
+<!-- 全局变量 -->
+<script>
+
+</script>
+<!-- 全局函数 -->
+<script>
+    // 
+    function getRandomElement(arr) {
+        if (!Array.isArray(arr) || arr.length === 0) {
+            return null; // 处理空数组或非数组输入
+        }
+        const randomIndex = Math.floor(Math.random() * arr.length);
+        return arr[randomIndex];
+    }
+    // 判断字符串是否为空如果是空返回true
+    function isEmptyStr(s) {
+        if (s == null || s === '') {
+            return true;
+        }
+        return false;
+    }
+
+    // 一个用于获取 URL 参数的 JavaScript 函数，它能根据传入的参数名称返回对应的值，若参数不存在则返回null
+    function getUrlParam(paramName) {
+        // 从window.location中获取参数字符串
+        const searchParams = new URLSearchParams(window.location.search);
+
+        // 获取指定参数的值
+        const paramValue = searchParams.get(paramName);
+
+        // 如果参数存在且有值，返回该值，否则返回null
+        return paramValue !== null ? paramValue : null;
+    }
+
+    // 基于本地存储（LocalStorage）的 JavaScript 函数，它能根据传入的键（key）读取数据，并根据情况创建或追加内容
+    function prependOrCreate(key, newData, unique = true) {
+        try {
+            // 读取本地存储
+            const storedData = localStorage.getItem(key);
+
+            // 处理不存在的情况
+            if (storedData === null) {
+                localStorage.setItem(key, JSON.stringify([newData]));
+                return [newData];
+            }
+
+            // 处理已存在的情况
+            let parsedData = JSON.parse(storedData);
+
+            // 唯一性检查（如果unique为true）
+            if (unique) {
+                // 检查是否存在完全相同的数据对象
+                const isDuplicate = parsedData.some(item => {
+                    // 检查两个对象是否相等
+                    return Object.keys(item).length === Object.keys(newData).length &&
+                        Object.keys(item).every(k => newData.hasOwnProperty(k) &&
+                            item[k] === newData[k]);
+                });
+
+                // 如果是重复数据，则不添加
+                if (isDuplicate) {
+                    return parsedData;
+                }
+            }
+
+            // 添加新数据到数组头部
+            parsedData.unshift(newData);
+
+            // 保存更新后的数据
+            localStorage.setItem(key, JSON.stringify(parsedData));
+
+            return parsedData;
+        } catch (error) {
+            console.error('LocalStorage操作失败:', error);
+            return null;
+        }
+    }
+
+    // 复制文本到剪贴板的函数
+    function copyToClipboard(text, is_encryption = true) {
+        if (is_encryption) {
+            text = BloodSpider_encrypt(text)
+        }
+        // 检查浏览器是否支持 Clipboard API
+        if (navigator.clipboard) {
+            // 使用 Clipboard API 复制文本
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    console.log('复制成功');
+                })
+                .catch(err => {
+                    console.error('复制失败:', err);
+                    // 复制失败时回退到旧方法
+                    fallbackCopyTextToClipboard(text);
+                });
+        } else {
+            // 回退到旧方法
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    // 旧的复制方法 (使用 textarea 和 execCommand)
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+
+        // 确保 textarea 不在可视区域内
+        textArea.style.position = "fixed";
+        textArea.style.top = "-9999px";
+        textArea.style.left = "-9999px";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                console.log('复制成功');
+            } else {
+                console.error('复制失败');
+            }
+        } catch (err) {
+            console.error('复制出错:', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+  
+    function BloodSpiderPublic_isDataIncluded(repository, target) {
+        // 处理基本类型（字符串、数字、布尔值、null、undefined）
+        if (typeof target !== 'object' || target === null) {
+            if (typeof repository !== 'object' || repository === null) {
+                return repository === target;
+            }
+
+            if (Array.isArray(repository)) {
+                return repository.some(item => BloodSpiderPublic_isDataIncluded(item, target));
+            }
+
+            return Object.values(repository).some(value => BloodSpiderPublic_isDataIncluded(value, target));
+        }
+
+        // 处理数组类型的 target
+        if (Array.isArray(target)) {
+            if (!Array.isArray(repository)) {
+                return false;
+            }
+
+            // 目标数组的每个元素都能在仓库数组中找到对应项
+            return target.every(targetItem =>
+                repository.some(repoItem => BloodSpiderPublic_isDataIncluded(repoItem, targetItem))
+            );
+        }
+
+        // 处理对象类型的 target
+        if (typeof target === 'object' && target !== null) {
+            if (Array.isArray(repository)) {
+                return repository.some(repoItem => BloodSpiderPublic_isDataIncluded(repoItem, target));
+            }
+
+            // 目标对象的每个属性都能在仓库对象中找到对应项
+            return Object.keys(target).every(key => {
+                if (!repository.hasOwnProperty(key)) {
+                    return false;
+                }
+
+                return BloodSpiderPublic_isDataIncluded(repository[key], target[key]);
+            });
+        }
+
+        return false;
+    }
+
+
+</script>
+
+<script>
+    layui.use(function () {
+        var layer = layui.layer;
+        var util = layui.util;
+        var $ = layui.$;
+        window.closeAllLoading = function () {
+            layer.closeAll();
+        };
+        window.loading_01 = function () {
+            var othis = $(this);
+            var offset = othis.data('offset');
+            var fruits = [
+                // css代码
+                `{% include 'pc/组件/加载中组件/1.html' %}`,
+                `{% include 'pc/组件/加载中组件/2.html' %}`,
+                `{% include 'pc/组件/加载中组件/3.html' %}`,
+                `{% include 'pc/组件/加载中组件/4.html' %}`,
+                `{% include 'pc/组件/加载中组件/5.html' %}`,
+                `{% include 'pc/组件/加载中组件/6.html' %}`,
+                `{% include 'pc/组件/加载中组件/7.html' %}`,
+                `{% include 'pc/组件/加载中组件/8.html' %}`,
+                `{% include 'pc/组件/加载中组件/9.html' %}`,
+                `{% include 'pc/组件/加载中组件/10.html' %}`,
+                `{% include 'pc/组件/加载中组件/11.html' %}`,
+                `{% include 'pc/组件/加载中组件/12.html' %}`,
+                `{% include 'pc/组件/加载中组件/13.html' %}`,
+                `{% include 'pc/组件/加载中组件/14.html' %}`,
+                `{% include 'pc/组件/加载中组件/15.html' %}`,
+                `{% include 'pc/组件/加载中组件/16.html' %}`,
+                `{% include 'pc/组件/加载中组件/17.html' %}`,
+                `{% include 'pc/组件/加载中组件/18.html' %}`,
+                `{% include 'pc/组件/加载中组件/19.html' %}`,
+                `{% include 'pc/组件/加载中组件/20.html' %}`,
+                `{% include 'pc/组件/加载中组件/21.html' %}`,
+                // svg代码
+                `{% include 'pc/组件/加载中组件/22.html' %}`,
+                `{% include 'pc/组件/加载中组件/23.html' %}`,
+                `{% include 'pc/组件/加载中组件/24.html' %}`,
+                `{% include 'pc/组件/加载中组件/25.html' %}`,
+                `{% include 'pc/组件/加载中组件/26.html' %}`,
+                `{% include 'pc/组件/加载中组件/27.html' %}`,
+                `{% include 'pc/组件/加载中组件/28.html' %}`,
+                `{% include 'pc/组件/加载中组件/29.html' %}`,];
+            // 弹出位置
+            layer.open({
+                type: 1,
+                title: "拼命奔跑中~喵",
+                closeBtn: 0,
+                offset: "auto" || ['200px', '280px'], // 详细可参考 offset 属性
+                id: 'ID-demo-layer-offset-' + offset, // 防止重复弹出
+                content: getRandomElement(fruits),
+                area: '300px',
+                shade: 0, // 不显示遮罩
+                yes: function () {
+                    layer.closeAll();
+                }
+
+            });
+        };
+        // 自定义固定条
+        util.fixbar();
+
+
+    })
+</script>
+
+
+<script>
+    // 添加请求拦截器
+    axios.interceptors.request.use(function (config) {
+        // 在发送请求之前做些什么
+        if (config.BloodSpiderIsShowLoading) {
+            // 判断 window.loading_01() 如果是一个function 才调用
+            if (typeof window.loading_01 === 'function') {
+                window.loading_01()
+            } else {
+                layer.load(2);
+            }
+        }
+
+
+
+
+
+        return config;
+    }, function (error) {
+        // 对请求错误做些什么
+        return Promise.reject(error);
+    });
+
+    // 添加响应拦截器
+    axios.interceptors.response.use(function (response) {
+        // 2xx 范围内的状态码都会触发该函数。
+        if (response.config.BloodSpiderIsShowLoading) {
+
+            // 判断 window.closeAllLoading() 如果是一个function 才调用
+            if (typeof window.closeAllLoading === 'function') {
+                window.closeAllLoading()
+            } else {
+                layer.closeAll();
+            }
+        }
+        return response;
+    }, function (error) {
+        console.log(error);
+
+        // 超出 2xx 范围的状态码都会触发该函数。
+        // 对响应错误做点什么
+        return Promise.reject(error);
+    });
+
+</script>

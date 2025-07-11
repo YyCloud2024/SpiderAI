@@ -1,0 +1,204 @@
+{% extends "pc/template.html" %}
+
+{% block title %}线路管理{% endblock %}
+
+{% block css %}
+<style>
+    .line-container {
+        padding: 15px;
+    }
+
+    .line-section {
+        margin-bottom: 25px;
+    }
+
+    .line-title {
+        font-size: 16px;
+        font-weight: bold;
+        margin-bottom: 12px;
+        color: #333;
+        border-left: 4px solid #1E9FFF;
+        padding-left: 10px;
+    }
+
+    .line-table {
+        margin-bottom: 15px;
+    }
+
+    .status-online {
+        color: #5FB878;
+    }
+
+    .status-offline {
+        color: #FF5722;
+    }
+
+    /* 响应式表格 */
+    .layui-table {
+        width: 100%;
+        table-layout: auto;
+    }
+
+    @media screen and (max-width: 768px) {
+        .layui-table thead {
+            display: none;
+        }
+
+        .layui-table tr {
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 1px solid #eee;
+            padding: 10px 0;
+        }
+
+        .layui-table td {
+            flex: 1 1 50%;
+            border: none;
+            padding: 8px 12px;
+            position: relative;
+        }
+
+        .layui-table td:before {
+            content: attr(data-label);
+            display: block;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 4px;
+        }
+    }
+
+    .line-card {
+        background: #fff;
+        border: 1px solid #e6e6e6;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        padding: 12px;
+    }
+
+    .line-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .line-name {
+        font-weight: bold;
+        color: #333;
+    }
+
+    .line-status {
+        font-size: 12px;
+    }
+
+    .line-action {
+        text-align: right;
+    }
+
+
+
+    /* PC端显示 */
+    @media screen and (min-width: 769px) {
+        .mobile-card {
+            display: none;
+        }
+
+        .mobile-table {
+            display: table;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="line-container">
+    <div class="line-section">
+        <div class="line-title">大模型线路</div>
+
+        <!-- 自适应表格 -->
+        <table class="layui-table" lay-skin="line" lay-size="sm">
+            <thead>
+                <tr>
+                    <th data-label="线路名称">名称</th>
+                    <th data-label="状态">状态</th>
+                    <th data-label="操作">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in link_list %}
+                <tr>
+                    <td data-label="线路名称">{{ item }}</td>
+                    <td data-label="状态"><span class="status-online">● 在线</span></td>
+                    <td data-label="操作">
+                        <button class="layui-btn layui-btn-sm layui-btn-normal" data-name="/web/link/{{ item }}/"  lay-on="selectLine">
+                            选择线路
+                        </button>
+
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+
+
+</div>
+{% endblock %}
+
+{% block js %}
+<script>
+    layui.use(['table', 'layer'], function () {
+        var table = layui.table;
+        var layer = layui.layer;
+        let $ = layui.jquery;
+        var util = layui.util;
+
+        util.on('lay-on', {
+            "selectLine": (elem) => {
+                console.log('选择了线路：' + elem.attr("data-name"));
+                prependOrCreate("home_index", elem.attr("data-name"))
+                window.location.href = elem.attr("data-name")
+
+            }
+        })
+        // 初始化表格
+        table.init('line-table', {
+            limit: 10
+        });
+
+        // 页面加载完成后的初始化
+        $(document).ready(function () {
+            console.log('线路管理页面加载完成');
+
+            // 检测设备类型并调整显示
+            function adjustForDevice() {
+                var isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    console.log('移动端设备检测');
+                } else {
+                    console.log('PC端设备检测');
+                }
+            }
+
+            // 页面加载时检测
+            adjustForDevice();
+
+            // 窗口大小改变时重新检测
+            $(window).resize(function () {
+                adjustForDevice();
+            });
+
+            // 可以在这里添加页面初始化逻辑
+            // 比如从服务器获取线路数据等
+        });
+
+
+    });
+
+
+
+
+</script>
+{% endblock %}

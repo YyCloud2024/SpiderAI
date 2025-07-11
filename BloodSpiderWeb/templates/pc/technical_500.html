@@ -1,0 +1,113 @@
+{% extends "pc/template.html" %}
+{% block title %}500 - 服务器内部错误{% endblock %}
+{% block css %}
+  <style>
+    body {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #FF5722 0%, #FFB800 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'HarmonyOS Sans', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif;
+    }
+    .error500-card {
+        background: rgba(255,255,255,0.92);
+        box-shadow: 0 8px 32px 0 rgba(255,87,34,0.13), 0 1.5px 6px 0 rgba(255,184,0,0.08);
+        border-radius: 16px;
+        padding: 48px 36px 36px 36px;
+        max-width: 520px;
+        width: 100%;
+        text-align: center;
+        backdrop-filter: blur(12px);
+        position: relative;
+        overflow: hidden;
+    }
+    .error500-icon {
+        font-size: 64px;
+        color: #FF5722;
+        margin-bottom: 18px;
+        display: inline-block;
+        animation: float500 2.5s infinite ease-in-out;
+    }
+    @keyframes float500 {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-12px); }
+    }
+    .error500-title {
+        font-size: 32px;
+        font-weight: 700;
+        color: #222;
+        margin-bottom: 12px;
+        letter-spacing: 2px;
+    }
+    .error500-desc {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 28px;
+        line-height: 1.7;
+    }
+    .error500-detail {
+        background: #fff7e6;
+        color: #d46b08;
+        border-radius: 8px;
+        padding: 16px 12px;
+        margin-bottom: 18px;
+        font-size: 14px;
+        word-break: break-all;
+        text-align: left;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+    .layui-btn-home {
+        background: linear-gradient(90deg, #FF5722 0%, #FFB800 100%);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        padding: 10px 36px;
+        box-shadow: 0 2px 8px rgba(255,87,34,0.10);
+        transition: box-shadow 0.2s, transform 0.2s;
+        font-weight: 500;
+    }
+    .layui-btn-home:hover {
+        box-shadow: 0 6px 24px rgba(255,87,34,0.18);
+        transform: translateY(-2px) scale(1.03);
+        background: linear-gradient(90deg, #FFB800 0%, #FF5722 100%);
+    }
+    @media (max-width: 480px) {
+        .error500-card {
+            padding: 32px 10px 24px 10px;
+            max-width: 98vw;
+        }
+        .error500-title {
+            font-size: 22px;
+        }
+        .error500-desc {
+            font-size: 14px;
+        }
+    }
+</style>
+{% endblock %}
+{% block body %}
+<div class="error500-card layui-anim layui-anim-up">
+    <i class="layui-icon layui-icon-about error500-icon"></i>
+    <div class="error500-title">500 - 服务器内部错误</div>
+    <div class="error500-desc">
+        很抱歉，服务器遇到异常，无法完成您的请求。<br>
+        请稍后重试，或联系管理员。
+    </div>
+    {% if exception_value %}
+    <div class="error500-detail">
+        <b>错误详情：</b><br>{{ exception_value|force_escape }}
+</div>
+    {% endif %}
+    <a href="/" class="layui-btn layui-btn-home">返回首页</a>
+</div>
+{% endblock %}
+{% block js %}
+<script>
+layui.use(function(){
+    // 可选：页面动画或交互
+});
+</script>
+{% endblock %}

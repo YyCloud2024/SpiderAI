@@ -1,0 +1,31 @@
+{% extends "pc/template.html" %}
+
+{% block title %}大模型首页{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+
+{% block body %}
+    <div class="layui-row">
+        <div class="layui-col-xs2">
+            <div class="grid-demo grid-demo-bg1">
+                {% include 'pc/组件/页面组件/左侧对话列表导航.html' %}
+            </div>
+        </div>
+        <div class="layui-col-xs10 ">
+            <div class="grid-demo">
+                {% include 'pc/组件/页面组件/主区.html' %}
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block js %}
+    <script>
+        // 初始化各种数据
+    </script>
+{% endblock %}
