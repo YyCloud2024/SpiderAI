@@ -1,0 +1,8 @@
+-i https://mirrors.aliyun.com/pypi/simple/
+
+Django
+django-cors-headers
+cryptography
+requests
+PyExecJS
+loguru
