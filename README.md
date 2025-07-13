@@ -18,6 +18,29 @@ SpiderAI是一款基于Django开发的AI能力聚合工具，通过智能爬虫�
 | 腾讯元宝 | ✅    | ✅    |
 | Kimi | ✅    | ❌    |
 
+## 快速开始
+
+按照以下步骤快速启动SpiderAI服务：
+
+1. **确认Python环境**
+   确保已安装Python 3.x环境，推荐使用3.12版本以获得最佳兼容性。
+
+2. **配置BloodSpiderModel库**
+   将项目根目录下的`Models/BloodSpiderModel`文件夹添加到Python虚拟环境（venv）中。具体操作可参考[FAQ](#常见问题faq)中的解决方法。
+
+3. **安装依赖包**
+   在项目根目录下执行以下命令安装所需依赖：
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **启动Django服务**
+   在项目根目录下运行以下命令启动服务：
+   ```bash
+   python manage.py runserver 0.0.0.0:8889
+   ```
+   服务启动后，可通过 `http://localhost:8889` 访问, 访问API接口方法参考[API接口文档](#api接口文档)。
+
 ## 未来扩展计划
 
 我们将持续拓展支持的大模型生态，即将接入的能力包括：
