@@ -1,7 +1,7 @@
 # 基础版, 提供基础的对话能力
 import requests
 import json
-
+from BloodSpiderModel.SpiderAI.yuanbao_tencent_com_return_params import YuanBaoResponse
 
 class YuanBao:
     def __init__(self, yuanbao_config):
@@ -44,6 +44,7 @@ class YuanBao:
             'hy_user': self.hy_user,
             'hy_token': self.hy_token,
         }
+        self.yuanbao_tencent_com_return_params = YuanBaoResponse()
 
     # 创建对话
     def create_chat(self):
@@ -55,9 +56,7 @@ class YuanBao:
         }
 
         response = requests.post(chat_api, headers=self.headers, json=json_data, cookies=self.cookies).json()
-        return {
-            "chat_id": response['id']
-        }
+        return self.yuanbao_tencent_com_return_params.create_chat_id(response['id'])
 
     # 发送消息
     def send_message(self, message, chat_id, yuanbao_model="hunyuan_gpt_175B_0404", multimedia=[]):
@@ -110,7 +109,7 @@ class YuanBao:
         """
         参数说明:
         - offset: 偏移量，用于分页查询，默认为0,例如limit是1，那么此时offset就是0(0就是1)，如果想查询第二页，那么offset就是2。
-        - limit: 每页的记录数，默认为1。
+        - limit: 每页的记录数，默认为40。
         """
         offset = int(offset)
         limit = int(limit)
@@ -123,7 +122,17 @@ class YuanBao:
             'filterGoodQuestion': True,
         }
         response = requests.post(history_api, cookies=self.cookies, headers=self.headers, json=json_data).json()
-        return response
+        response_dict = self.yuanbao_tencent_com_return_params.get_chat_history(
+            limit=limit,
+            offset=offset,
+            total=response['pagination']['totalResults']
+        )
+        for item in response['conversations']:
+            response_dict["conversations"].append({
+                "id": item['id'],
+                "title": item['title']
+            })
+        return response_dict
 
     # 获取对话内容
     def get_chat_content(self, chat_id, offset=0, limit=60):
@@ -137,7 +146,17 @@ class YuanBao:
         }
         response = requests.post(f'{self.domain}/api/user/agent/conversation/v1/detail', cookies=self.cookies,
                                  headers=self.headers, json=json_data).json()
-        return response
+        response_dict = self.yuanbao_tencent_com_return_params.get_chat_content()
+        for item in response['convs']:
+            response_dict["convs"].append({
+                "id": item["id"],
+                "speaker": item["speaker"],
+                "content": {
+                    "msg": item['speechesV2'][0]['content'][0]['msg'],
+                    "type": "text"
+                }
+            })
+        return response_dict
 
     # 删除对话
     def delete_chat(self, chat_id):
@@ -151,7 +170,7 @@ class YuanBao:
 
         response = requests.post(f'{self.domain}/api/user/agent/conversation/v1/clear', cookies=self.cookies,
                                  headers=self.headers, json=json_data)
-        return response.text
+        return self.yuanbao_tencent_com_return_params.delete_chat()
 
     # 处理流式响应: 控制台方法
     def handle_stream_response(self, response):
@@ -248,10 +267,6 @@ class YuanBao:
 
     # 处理流式响应: websocket方法
     def handle_stream_response_websocket(self, response):
-        chat_dict = {
-            "chat_type": "loading",
-            "chat_content": "",
-        }
         for line in response.iter_lines():
             if line:
                 try:
@@ -260,60 +275,40 @@ class YuanBao:
                         text = text.replace('data: ', '')
                         # print("原始数据: " + text)
                         if text == "[DONE]":
-                            # 制作字典
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)}"
+                            yield self.yuanbao_tencent_com_return_params.chat_message("", "DONE")
                             break
                         text = json.loads(text)
                         if text['type'] == "text":
                             # 普通对话
                             if text.get("msg") is not None:
                                 # 制作字典
-                                chat_dict["chat_type"] = "chat"
-                                chat_dict["chat_content"] = text["msg"]
-                                yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                                yield self.yuanbao_tencent_com_return_params.chat_message(text["msg"], "chat")
                         elif text['type'] == "think":
                             # 思考中
                             # 制作字典
-                            chat_dict["chat_type"] = "think"
-                            chat_dict["chat_content"] = text["content"]
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                            yield self.yuanbao_tencent_com_return_params.chat_message(text["content"], "think")
                         elif text['type'] == "replace":
                             if text['replace']['multimedias'][0].get("url") is not None:
-                                # 制作字典
-                                chat_dict["chat_type"] = "image"
-                                chat_dict["chat_content"] = text['replace']['multimedias']
-                                yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                                yield self.yuanbao_tencent_com_return_params.chat_message(text['replace']['multimedias'], "image")
                         elif text['type'] == "progress":
                             # 进度
                             # 制作字典
-                            chat_dict["chat_type"] = "progress"
-                            chat_dict["chat_content"] = str(text['value'])
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                            yield self.yuanbao_tencent_com_return_params.chat_message(str(text['value']), "progress")
                         elif text['type'] == "image":
                             # 制作字典 图片
-                            chat_dict["chat_type"] = "image"
-                            chat_dict["chat_content"] = text['imageUrlLow']
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                            yield self.yuanbao_tencent_com_return_params.chat_message(text['imageUrlLow'], "image")
                         elif text['type'] == "style":
                             # 制作字典 风格地址
-                            chat_dict["chat_type"] = "image"
-                            chat_dict["chat_content"] = text['thumbnailUrl'].replace(r'\u0026', '&')
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                            yield self.yuanbao_tencent_com_return_params.chat_message(text['thumbnailUrl'].replace(r'\u0026', '&'), "image")
                         elif text['type'] == "error":
                             # 制作字典 错误
-                            chat_dict["chat_type"] = "error"
-                            chat_dict["chat_content"] = text['msg']
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                            yield self.yuanbao_tencent_com_return_params.chat_message(text['msg'], "error")
                         elif text['type'] == "removewatermark":
                             # 制作字典 去除水印成品图
-                            chat_dict["chat_type"] = "image"
-                            chat_dict["chat_content"] =text['imageUrl']
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                            yield self.yuanbao_tencent_com_return_params.chat_message(text['imageUrl'], "image")
                         elif text['type'] == "clarity":
                             # 制作字典 变清晰成品图
-                            chat_dict["chat_type"] = "image"
-                            chat_dict["chat_content"] = text['imageUrl']
-                            yield f"data: {json.dumps(chat_dict, ensure_ascii=False)} \n\n"
+                            yield self.yuanbao_tencent_com_return_params.chat_message(text['imageUrl'], "image")
                         else:
                             continue
                 except json.JSONDecodeError as e:

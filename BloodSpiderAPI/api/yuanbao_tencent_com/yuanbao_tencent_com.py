@@ -127,15 +127,15 @@ def create_chat_id(request):
 
 # 对话
 def chat_message(request):
-    if request.method != "GET":
+    if request.method != "POST":
         return response_dict(2, "请求方式错误，此接口仅支持GET请求", None)
     required_params = ['chat_id', 'message']
-    if not validate_required_params(request.GET, required_params):
+    if not validate_required_params(request.POST, required_params):
         return response_dict(1, f"缺少必要参数，需要参数: {', '.join(required_params)}", None)
-    chat_id = request.GET.get('chat_id')
-    message = request.GET.get('message')
-    yuanbao_model = request.GET.get('yuanbao_model', "hunyuan_gpt_175B_0404")
-    multimedia_str = request.GET.get('multimedia', '[]')
+    chat_id = request.POST.get('chat_id')
+    message = request.POST.get('message')
+    yuanbao_model = request.POST.get('yuanbao_model', "hunyuan_gpt_175B_0404")
+    multimedia_str = request.POST.get('multimedia', '[]')
     try:
         multimedia = json.loads(multimedia_str)
     except json.JSONDecodeError:
